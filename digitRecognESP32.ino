@@ -341,7 +341,7 @@ const char* htmlPage = R"rawliteral(
 
             let minX = tempCanvas.width, minY = tempCanvas.height;
             let maxX = 0, maxY = 0;
-            const threshold = 50; // Consider pixels > 50 as part of the digit
+            const threshold = 20; // Lowered threshold to catch more of the digit edges
 
             for (let y = 0; y < tempCanvas.height; y++) {
                 for (let x = 0; x < tempCanvas.width; x++) {
@@ -355,10 +355,10 @@ const char* htmlPage = R"rawliteral(
                 }
             }
 
-            // Add padding around the digit (20% of the digit size)
+            // Add minimal padding around the digit for tight crop
             const digitWidth = maxX - minX;
             const digitHeight = maxY - minY;
-            const padding = Math.max(digitWidth, digitHeight) * 0.2;
+            const padding = Math.max(digitWidth, digitHeight) * 0;  // Reduced from 0.2 to 0.05 for bigger digit
 
             minX = Math.max(0, minX - padding);
             minY = Math.max(0, minY - padding);
@@ -382,11 +382,11 @@ const char* htmlPage = R"rawliteral(
             croppedCanvas.height = cropHeight;
             croppedCtx.drawImage(tempCanvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
-            // Step 7: Resize to 20x20 (MNIST uses 20x20 digit, then centers in 28x28)
+            // Step 7: Resize to maximum size (fill almost entire 28x28 frame)
             const size20Canvas = document.createElement('canvas');
             const size20Ctx = size20Canvas.getContext('2d');
             const maxDim = Math.max(cropWidth, cropHeight);
-            const scale = 25 / maxDim;
+            const scale = 28 / maxDim;  // Scale to 28 pixels for maximum size
             const scaledWidth = cropWidth * scale;
             const scaledHeight = cropHeight * scale;
             size20Canvas.width = scaledWidth;
@@ -407,7 +407,7 @@ const char* htmlPage = R"rawliteral(
                 let value = finalData.data[i * 4];
 
                 // VERY aggressive threshold: only quite bright pixels survive
-                if (value < 100) {
+                if (value < 10) {
                     value = 0; // Pure black (0) - if it's not bright, it's black
                 } else {
                     // Scale the remaining values to use full white range
@@ -453,10 +453,27 @@ const char* htmlPage = R"rawliteral(
 
             ctx.putImageData(blurredData, 0, 0);
 
-            // Update preview to show the final thresholded result
+            // Step 11: Boost brightness on white pixels for more contrast
+            finalData = ctx.getImageData(0, 0, 28, 28);
+
+            for (let i = 0; i < 784; i++) {
+                let value = finalData.data[i * 4];
+
+                // If it's black, keep it black. Otherwise, boost brightness
+                if (value > 0) {
+                    // Boost white pixels to be brighter (1.4x multiplier with gamma correction)
+                    value = Math.min(255, Math.pow(value / 255, 0.7) * 255 * 1.2);
+                }
+
+                finalData.data[i * 4] = value;
+                finalData.data[i * 4 + 1] = value;
+                finalData.data[i * 4 + 2] = value;
+            }
+
+            // Update preview to show the final result
             ctx.putImageData(finalData, 0, 0);
 
-            // Step 11: Extract pixel data for ESP32
+            // Step 12: Extract pixel data for ESP32
             const pixels = new Float32Array(784);
             for (let i = 0; i < 784; i++) {
                 pixels[i] = finalData.data[i * 4] / 255.0;
