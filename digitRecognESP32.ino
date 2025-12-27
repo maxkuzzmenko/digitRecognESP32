@@ -196,11 +196,23 @@ const char* htmlPage = R"rawliteral(
         <div class="subtitle">ESP32 + TensorFlow Lite</div>
 
         <div class="info">
-            📝 Draw a <strong>single, large digit (0-9)</strong> on paper. Make it bold and clear! The image will be automatically cropped, centered, and inverted to match MNIST format.
+            ✏️ Draw a digit directly on the canvas below, or use photo/upload options!
         </div>
 
-        <button class="btn btn-primary" onclick="startCamera()">📷 Take Photo</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">📁 Upload Image</button>
+        <!-- Drawing Canvas -->
+        <div style="text-align: center; margin: 20px 0;">
+            <canvas id="drawCanvas" width="280" height="280" style="border: 3px solid #667eea; border-radius: 10px; background: white; cursor: crosshair; touch-action: none;"></canvas>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" onclick="submitDrawing()" style="flex: 1;">✓ Recognize Digit</button>
+            <button class="btn btn-secondary" onclick="clearCanvas()" style="flex: 1;">🗑️ Clear</button>
+        </div>
+
+        <div style="text-align: center; margin: 15px 0; color: #999; font-size: 13px;">— or —</div>
+
+        <button class="btn btn-secondary" onclick="startCamera()" style="font-size: 14px;">📷 Take Photo</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()" style="font-size: 14px;">📁 Upload Image</button>
         <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)">
 
         <video id="video" autoplay playsinline></video>
@@ -235,6 +247,93 @@ const char* htmlPage = R"rawliteral(
         const originalCanvas = document.getElementById('originalCanvas');
         const ctx = canvas.getContext('2d');
         const originalCtx = originalCanvas.getContext('2d');
+
+        // Drawing canvas setup
+        const drawCanvas = document.getElementById('drawCanvas');
+        const drawCtx = drawCanvas.getContext('2d');
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        // Initialize drawing canvas
+        drawCtx.fillStyle = 'white';
+        drawCtx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+        drawCtx.strokeStyle = '#000000';
+        drawCtx.lineWidth = 20;
+        drawCtx.lineCap = 'round';
+        drawCtx.lineJoin = 'round';
+
+        // Drawing functions
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = drawCanvas.getBoundingClientRect();
+            const scaleX = drawCanvas.width / rect.width;
+            const scaleY = drawCanvas.height / rect.height;
+
+            if (e.type.includes('mouse')) {
+                lastX = (e.clientX - rect.left) * scaleX;
+                lastY = (e.clientY - rect.top) * scaleY;
+            } else {
+                lastX = (e.touches[0].clientX - rect.left) * scaleX;
+                lastY = (e.touches[0].clientY - rect.top) * scaleY;
+            }
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+
+            const rect = drawCanvas.getBoundingClientRect();
+            const scaleX = drawCanvas.width / rect.width;
+            const scaleY = drawCanvas.height / rect.height;
+
+            let currentX, currentY;
+            if (e.type.includes('mouse')) {
+                currentX = (e.clientX - rect.left) * scaleX;
+                currentY = (e.clientY - rect.top) * scaleY;
+            } else {
+                currentX = (e.touches[0].clientX - rect.left) * scaleX;
+                currentY = (e.touches[0].clientY - rect.top) * scaleY;
+            }
+
+            drawCtx.beginPath();
+            drawCtx.moveTo(lastX, lastY);
+            drawCtx.lineTo(currentX, currentY);
+            drawCtx.stroke();
+
+            lastX = currentX;
+            lastY = currentY;
+        }
+
+        function stopDrawing() {
+            isDrawing = false;
+        }
+
+        function clearCanvas() {
+            drawCtx.fillStyle = 'white';
+            drawCtx.fillRect(0, 0, drawCanvas.width, drawCanvas.height);
+            document.getElementById('previewContainer').style.display = 'none';
+            document.getElementById('result').classList.remove('show');
+        }
+
+        function submitDrawing() {
+            // Copy drawing canvas to original canvas for full MNIST processing
+            originalCanvas.width = drawCanvas.width;
+            originalCanvas.height = drawCanvas.height;
+            originalCtx.drawImage(drawCanvas, 0, 0);
+            processImage();
+        }
+
+        // Mouse events
+        drawCanvas.addEventListener('mousedown', startDrawing);
+        drawCanvas.addEventListener('mousemove', draw);
+        drawCanvas.addEventListener('mouseup', stopDrawing);
+        drawCanvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events for mobile
+        drawCanvas.addEventListener('touchstart', startDrawing);
+        drawCanvas.addEventListener('touchmove', draw);
+        drawCanvas.addEventListener('touchend', stopDrawing);
 
         async function startCamera() {
             try {
@@ -382,11 +481,11 @@ const char* htmlPage = R"rawliteral(
             croppedCanvas.height = cropHeight;
             croppedCtx.drawImage(tempCanvas, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
 
-            // Step 7: Resize to maximum size (fill almost entire 28x28 frame)
+            // Step 7: Resize to fit within 20x20 (MNIST format)
             const size20Canvas = document.createElement('canvas');
             const size20Ctx = size20Canvas.getContext('2d');
             const maxDim = Math.max(cropWidth, cropHeight);
-            const scale = 28 / maxDim;  // Scale to 28 pixels for maximum size
+            const scale = 20 / maxDim;  // Scale to 20 pixels max (MNIST standard)
             const scaledWidth = cropWidth * scale;
             const scaledHeight = cropHeight * scale;
             size20Canvas.width = scaledWidth;
@@ -400,80 +499,8 @@ const char* htmlPage = R"rawliteral(
             const offsetY = (28 - scaledHeight) / 2;
             ctx.drawImage(size20Canvas, offsetX, offsetY);
 
-            // Step 9: Apply aggressive threshold - pure black background
-            let finalData = ctx.getImageData(0, 0, 28, 28);
-
-            for (let i = 0; i < 784; i++) {
-                let value = finalData.data[i * 4];
-
-                // VERY aggressive threshold: only quite bright pixels survive
-                if (value < 10) {
-                    value = 0; // Pure black (0) - if it's not bright, it's black
-                } else {
-                    // Scale the remaining values to use full white range
-                    value = Math.min(255, ((value - 100) / 155) * 255);
-                }
-
-                finalData.data[i * 4] = value;
-                finalData.data[i * 4 + 1] = value;
-                finalData.data[i * 4 + 2] = value;
-            }
-
-            // Step 10: Apply very subtle blur to round pixels
-            const blurredData = ctx.createImageData(28, 28);
-
-            for (let y = 0; y < 28; y++) {
-                for (let x = 0; x < 28; x++) {
-                    const idx = (y * 28 + x) * 4;
-                    let sum = 0;
-                    let totalWeight = 0;
-
-                    // Very subtle weighted blur - center pixel has most weight
-                    for (let dy = -1; dy <= 1; dy++) {
-                        for (let dx = -1; dx <= 1; dx++) {
-                            const nx = x + dx;
-                            const ny = y + dy;
-                            if (nx >= 0 && nx < 28 && ny >= 0 && ny < 28) {
-                                const nIdx = (ny * 28 + nx) * 4;
-                                // Center pixel gets weight 4, neighbors get weight 1
-                                const weight = (dx === 0 && dy === 0) ? 4 : 1;
-                                sum += finalData.data[nIdx] * weight;
-                                totalWeight += weight;
-                            }
-                        }
-                    }
-
-                    const blurred = sum / totalWeight;
-                    blurredData.data[idx] = blurred;
-                    blurredData.data[idx + 1] = blurred;
-                    blurredData.data[idx + 2] = blurred;
-                    blurredData.data[idx + 3] = 255;
-                }
-            }
-
-            ctx.putImageData(blurredData, 0, 0);
-
-            // Step 11: Boost brightness on white pixels for more contrast
-            finalData = ctx.getImageData(0, 0, 28, 28);
-
-            for (let i = 0; i < 784; i++) {
-                let value = finalData.data[i * 4];
-
-                // If it's black, keep it black. Otherwise, boost brightness
-                if (value > 0) {
-                    // Boost white pixels to be brighter (1.4x multiplier with gamma correction)
-                    value = Math.min(255, Math.pow(value / 255, 0.7) * 255 * 1.2);
-                }
-
-                finalData.data[i * 4] = value;
-                finalData.data[i * 4 + 1] = value;
-                finalData.data[i * 4 + 2] = value;
-            }
-
-            // Update preview to show the final result
-            ctx.putImageData(finalData, 0, 0);
-
-            // Step 12: Extract pixel data for ESP32
+            // Step 9: Extract pixel data for ESP32
+            const finalData = ctx.getImageData(0, 0, 28, 28);
             const pixels = new Float32Array(784);
             for (let i = 0; i < 784; i++) {
                 pixels[i] = finalData.data[i * 4] / 255.0;
