@@ -3,7 +3,7 @@ digit recognition CNN on an ESP32
 
 # How to use
 1. Install the required libraries
-2. Upload the project to the Arduino board (Or use Arduino)<br />
+2. Upload the project to the Arduino board (Or use Arduino IDE)<br />
    `arduino-cli compile --upload -p [Port] --fqbn esp32:esp32:esp32 [Project Path]`  <br />
    (for the port, see `arduino-cli board list`)
 3. Connect to the board's WiFi: <br />
