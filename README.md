@@ -2,15 +2,16 @@
 digit recognition CNN on an ESP32
 
 # How to use
-1. Upload the project to the Arduino board <br />
+1. Install the required libraries
+2. Upload the project to the Arduino board (Or use Arduino)<br />
    `arduino-cli compile --upload -p [Port] --fqbn esp32:esp32:esp32 [Project Path]`  <br />
    (for the port, see `arduino-cli board list`)
-2. Connect to the board's WiFi: <br />
+3. Connect to the board's WiFi: <br />
    SSID: `ESP32-Digit-Recognition` <br />
    Password: `12345678`
-3. Go to board's web page:
+4. Go to board's web page:
 Open any browser and go to http://192.168.4.1/
-4. Draw a digit on the field and press the "Recognize Digit" button to, well, recognize the digit.
+5. Draw a digit on the field and press the "Recognize Digit" button to, well, recognize the digit.
    Alternatively, you can try uploading an image
 
 # Training
