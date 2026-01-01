@@ -76,7 +76,7 @@ app.listen(PORT, () => {
   Server running at: http://localhost:${PORT}
 
   Instructions:
-  1. Open http://localhost:${PORT}/draw.html
+  1. Open http://localhost:${PORT}/
   2. Select digit (0-9)
   3. Draw the digit
   4. Click "Save to Dataset"
