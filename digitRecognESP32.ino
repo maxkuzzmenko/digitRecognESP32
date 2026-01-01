@@ -192,12 +192,7 @@ const char* htmlPage = R"rawliteral(
 </head>
 <body>
     <div class="container">
-        <h1>🔢 Digit Recognition</h1>
         <div class="subtitle">ESP32 + TensorFlow Lite</div>
-
-        <div class="info">
-            ✏️ Draw a digit directly on the canvas below, or use photo/upload options!
-        </div>
 
         <!-- Drawing Canvas -->
         <div style="text-align: center; margin: 20px 0;">
@@ -211,7 +206,6 @@ const char* htmlPage = R"rawliteral(
 
         <div style="text-align: center; margin: 15px 0; color: #999; font-size: 13px;">— or —</div>
 
-        <button class="btn btn-secondary" onclick="startCamera()" style="font-size: 14px;">📷 Take Photo</button>
         <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()" style="font-size: 14px;">📁 Upload Image</button>
         <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)">
 

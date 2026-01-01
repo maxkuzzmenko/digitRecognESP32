@@ -50,7 +50,7 @@ app.post('/save-image', (req, res) => {
 
     // Generate unique ID based on timestamp
     const timestamp = Date.now();
-    const filename = `${timestamp}.png`;
+    const filename = `${timestamp}_${digit}.png`;
     const filepath = path.join(__dirname, 'dataset', digit.toString(), filename);
 
     // Remove base64 prefix if present
@@ -81,7 +81,7 @@ app.listen(PORT, () => {
   3. Draw the digit
   4. Click "Save to Dataset"
 
-  Images saved to: dataset/[digit]/[timestamp].png
+  Images saved to: dataset/[digit]/[timestamp]_[digit].png
 ========================================
     `);
 });
