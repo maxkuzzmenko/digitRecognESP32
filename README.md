@@ -19,7 +19,7 @@ In this section, I'm referring to the code [here](https://colab.research.google.
 It was originally trained on the MNIST dataset. But it showed poor performance recognizing our own digits. <br />
 So I decided it would be better to make my own dataset. So I wrote a script that allows you to create your own dataset easily and efficiently.
 
-To start creating your own dataset run `node server.js`, this will start a web server. Once the server starts, go to http://localhost:3000/draw.html and you'll see the web page. <br />
+To start creating your own dataset run `node server.js`, this will start a web server. Once the server starts, go to http://localhost:3000/ and you'll see the web page. <br />
 If you don't have node js, you can download it [here](https://nodejs.org/en/download).
 
 From that point, it's quite self-explanatory. You draw a digit, it gets automatically gets processed and saved as [timestamp]_[digit].png in the ./digits/[digit] folder. 
