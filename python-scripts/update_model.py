@@ -8,7 +8,7 @@ import os
 
 # File paths
 DOWNLOADS_FILE = os.path.expanduser("~/Downloads/file.txt")
-HEADER_FILE = os.path.join(os.path.dirname(__file__), "digit_recogn.h")
+HEADER_FILE = os.path.join(os.path.dirname(__file__), "..", "digit_recogn.h")
 
 def replace_model_in_header(header_path, downloads_file):
     """
