@@ -22,7 +22,7 @@ So I decided it would be better to make my own dataset. So I wrote a script that
 To start creating your own dataset run `node server.js`, this will start a web server. Once the server starts, go to http://localhost:3000/ and you'll see the web page. <br />
 *Note: If you don't have node js, you can download it [here](https://nodejs.org/en/download).*
 
-From that point, it's quite self-explanatory. You draw a digit, it gets automatically gets processed and saved as [timestamp]_[digit].png in the ./digits/[digit] folder. 
+From that point, it's quite self-explanatory. You draw a digit, it gets automatically gets processed and saved as [timestamp]_[digit].png in the ./create-dataset/dataset/[digit] folder. 
 
 The code is designed to get the model trained on the homemade dataset. To change that, edit the get_model() function after the instruction provided in the comments of the function itself.
 
