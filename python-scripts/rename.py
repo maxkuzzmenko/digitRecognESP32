@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-directory = "./dataset/"
+directory = "./create-dataset/dataset/"
 
 """
 variables:
