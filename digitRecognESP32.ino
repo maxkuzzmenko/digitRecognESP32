@@ -172,49 +172,30 @@ const char* htmlPage = R"rawliteral(
             background-clip: text;
         }
 
-        .status-badge {
-            background: rgba(129, 140, 248, 0.1);
-            color: var(--primary);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-            margin-bottom: 30px;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .status-badge.visible { opacity: 1; }
-
         .debug-view {
+            flex: 1;
+            width: 100%;
             display: flex;
-            gap: 10px;
+            flex-direction: column;
+            gap: 15px;
             align-items: center;
-            opacity: 0.5;
-            transition: opacity 0.3s;
+            justify-content: center;
+            opacity: 0.8;
+            background: rgba(0,0,0,0.1);
+            border-radius: 16px;
+            margin-top: 20px;
         }
-        .debug-view:hover { opacity: 1; }
         
         canvas#c {
-            width: 28px;
-            height: 28px;
-            border-radius: 4px;
+            width: 140px;
+            height: 140px;
+            border-radius: 8px;
             border: 1px solid rgba(255,255,255,0.2);
             image-rendering: pixelated;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
 
-        .loader {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255,255,255,0.1);
-            border-top: 3px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            position: absolute;
-            display: none;
-        }
-        .loader.active { display: block; }
 
-        @keyframes spin { 100% { transform: rotate(360deg); } }
 
         input[type="file"] { display: none; }
 
@@ -254,13 +235,10 @@ const char* htmlPage = R"rawliteral(
 
             <!-- Right Panel: Feedback -->
             <div class="panel panel-right">
-                <div class="loader" id="loader"></div>
                 <div class="label">PREDICTION</div>
                 <div class="prediction-box" id="p">-</div>
-                <div class="status-badge visible" id="status">NEURAL LINK ACTIVE</div>
-                
                 <div class="debug-view">
-                    <div style="font-size: 10px; color: var(--text-sub)">INPUT SENSOR</div>
+                    <div style="font-size: 10px; letter-spacing: 2px; font-weight: 600; color: var(--text-sub)">PROCESSED INPUT</div>
                     <canvas id="c" width="28" height="28"></canvas>
                 </div>
             </div>
@@ -269,8 +247,6 @@ const char* htmlPage = R"rawliteral(
 
     <script>
         const d=document.getElementById('d'),c=document.getElementById('c'),dx=d.getContext('2d'),cx=c.getContext('2d');
-        const loader = document.getElementById('loader');
-
         const predEl = document.getElementById('p');
         
         let dr=0,lx=0,ly=0;
@@ -312,7 +288,6 @@ const char* htmlPage = R"rawliteral(
         }
 
         function proc(src){
-            loader.classList.add('active');
 
             
             // Image Processing Pipeline
@@ -332,7 +307,6 @@ const char* htmlPage = R"rawliteral(
             
             const cw=mxx-mnx,ch=mxy-mny;
             if(cw<=0||ch<=0){
-                loader.classList.remove('active');
                 alert("No digit detected!");
                 return;
             }
@@ -357,7 +331,6 @@ const char* htmlPage = R"rawliteral(
             try{
                 const rs=await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pixels:Array.from(px)})});
                 const dt=await rs.json();
-                loader.classList.remove('active');
                 if(dt.success){
                     predEl.textContent=dt.digit;
 
@@ -365,7 +338,6 @@ const char* htmlPage = R"rawliteral(
                     alert("Error: "+dt.error);
                 }
             }catch(e){
-                loader.classList.remove('active');
                 alert("Connection failed");
             }
         }
