@@ -4,6 +4,7 @@ const path = require('path');
 
 const app = express();
 const PORT = 3000;
+const DATASET_ROOT = path.join(__dirname, 'dataset');
 
 API_KEY="EYZFUEKJFAOUIIDQBUSS"
 
@@ -13,7 +14,7 @@ app.use(express.static(__dirname));
 
 // Ensure dataset directories exist
 for (let i = 0; i < 10; i++) {
-    const dir = path.join(__dirname, 'dataset', i.toString());
+    const dir = path.join(DATASET_ROOT, i.toString());
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
     }
@@ -25,7 +26,7 @@ app.get('/image-count', (req, res) => {
     const countByDigit = {};
 
     for (let i = 0; i < 10; i++) {
-        const dir = path.join(__dirname, 'dataset', i.toString());
+        const dir = path.join(DATASET_ROOT, i.toString());
         if (fs.existsSync(dir)) {
             const files = fs.readdirSync(dir).filter(file => file.endsWith('.png'));
             countByDigit[i] = files.length;
@@ -46,14 +47,21 @@ app.post('/save-image', (req, res) => {
         return res.status(400).json({ success: false, error: 'Missing digit or imageData' });
     }
 
-    if (digit < 0 || digit > 9) {
-        return res.status(400).json({ success: false, error: 'Digit must be 0-9' });
+    const digitNum = parseInt(digit, 10);
+    if (Number.isNaN(digitNum) || digitNum < 0 || digitNum > 9) {
+        return res.status(400).json({ success: false, error: 'Digit must be an integer between 0 and 9' });
     }
 
     // Generate unique ID based on timestamp
     const timestamp = Date.now();
-    const filename = `${timestamp}_${digit}.png`;
-    const filepath = path.join(__dirname, 'dataset', digit.toString(), filename);
+    const filename = `${timestamp}_${digitNum}.png`;
+    const unsafeRelativePath = path.join(digitNum.toString(), filename);
+    const filepath = path.resolve(DATASET_ROOT, unsafeRelativePath);
+
+    // Ensure the resolved path is within the dataset root
+    if (!filepath.startsWith(DATASET_ROOT + path.sep)) {
+        return res.status(400).json({ success: false, error: 'Invalid file path' });
+    }
 
     // Remove base64 prefix if present
     const base64Data = imageData.replace(/^data:image\/png;base64,/, '');
@@ -65,8 +73,8 @@ app.post('/save-image', (req, res) => {
             return res.status(500).json({ success: false, error: 'Failed to save file' });
         }
 
-        console.log(`✓ Saved: dataset/${digit}/${filename}`);
-        res.json({ success: true, filename, path: `dataset/${digit}/${filename}` });
+        console.log(`✓ Saved: dataset/${digitNum}/${filename}`);
+        res.json({ success: true, filename, path: `dataset/${digitNum}/${filename}` });
     });
 });
 
