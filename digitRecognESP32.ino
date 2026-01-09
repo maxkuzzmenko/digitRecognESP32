@@ -257,7 +257,7 @@ const char* htmlPage = R"rawliteral(
                 <div class="loader" id="loader"></div>
                 <div class="label">PREDICTION</div>
                 <div class="prediction-box" id="p">-</div>
-                <div class="status-badge" id="status">Ready</div>
+                <div class="status-badge visible" id="status">NEURAL LINK ACTIVE</div>
                 
                 <div class="debug-view">
                     <div style="font-size: 10px; color: var(--text-sub)">INPUT SENSOR</div>
@@ -270,7 +270,7 @@ const char* htmlPage = R"rawliteral(
     <script>
         const d=document.getElementById('d'),c=document.getElementById('c'),dx=d.getContext('2d'),cx=c.getContext('2d');
         const loader = document.getElementById('loader');
-        const statusEl = document.getElementById('status');
+
         const predEl = document.getElementById('p');
         
         let dr=0,lx=0,ly=0;
@@ -283,11 +283,7 @@ const char* htmlPage = R"rawliteral(
         dx.lineCap='round';
         dx.lineJoin='round';
 
-        function setStatus(msg, type='info') {
-            statusEl.textContent = msg;
-            statusEl.classList.add('visible');
-            setTimeout(() => { if(msg === statusEl.textContent) statusEl.classList.remove('visible'); }, 3000);
-        }
+
 
         // Drawing Logic
         function st(e){dr=1;const r=d.getBoundingClientRect(),sx=d.width/r.width,sy=d.height/r.height;if(e.type.includes('mouse')){lx=(e.clientX-r.left)*sx;ly=(e.clientY-r.top)*sy}else{lx=(e.touches[0].clientX-r.left)*sx;ly=(e.touches[0].clientY-r.top)*sy}}
@@ -301,7 +297,7 @@ const char* htmlPage = R"rawliteral(
             dx.fillStyle='#fff';
             dx.fillRect(0,0,d.width,d.height);
             predEl.textContent = "-";
-            setStatus("Canvas Cleared");
+
             // Clear debug view too
             cx.clearRect(0,0,28,28);
         }
@@ -317,7 +313,7 @@ const char* htmlPage = R"rawliteral(
 
         function proc(src){
             loader.classList.add('active');
-            setStatus("Processing...");
+
             
             // Image Processing Pipeline
             const t=document.createElement('canvas'),tx=t.getContext('2d');
@@ -337,7 +333,7 @@ const char* htmlPage = R"rawliteral(
             const cw=mxx-mnx,ch=mxy-mny;
             if(cw<=0||ch<=0){
                 loader.classList.remove('active');
-                setStatus("No digit detected!");
+                alert("No digit detected!");
                 return;
             }
             
@@ -364,13 +360,13 @@ const char* htmlPage = R"rawliteral(
                 loader.classList.remove('active');
                 if(dt.success){
                     predEl.textContent=dt.digit;
-                    setStatus("Identified!", "success");
+
                 }else{
-                    setStatus("Error: "+dt.error);
+                    alert("Error: "+dt.error);
                 }
             }catch(e){
                 loader.classList.remove('active');
-                setStatus("Connection failed");
+                alert("Connection failed");
             }
         }
     </script>
