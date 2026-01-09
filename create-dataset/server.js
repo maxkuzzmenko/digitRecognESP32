@@ -1,12 +1,20 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = 3000;
 const DATASET_ROOT = path.join(__dirname, 'dataset');
 
 API_KEY="EYZFUEKJFAOUIIDQBUSS"
+
+const saveImageLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 60, // limit each IP to 60 save-image requests per `windowMs`
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
@@ -40,7 +48,7 @@ app.get('/image-count', (req, res) => {
 });
 
 // Save image endpoint
-app.post('/save-image', (req, res) => {
+app.post('/save-image', saveImageLimiter, (req, res) => {
     const { digit, imageData } = req.body;
 
     if (digit === undefined || !imageData) {
