@@ -2,3 +2,4 @@
 *.log
 *.tmp
 arduino
+arduino.sarif
