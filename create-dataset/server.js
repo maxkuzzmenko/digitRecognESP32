@@ -7,8 +7,6 @@ const app = express();
 const PORT = 3000;
 const DATASET_ROOT = path.join(__dirname, 'dataset');
 
-API_KEY="EYZFUEKJFAOUIIDQBUSS"
-
 const saveImageLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
     max: 60, // limit each IP to 60 save-image requests per `windowMs`
@@ -29,7 +27,7 @@ for (let i = 0; i < 10; i++) {
 }
 
 // Get image count endpoint
-app.get('/image-count', (req, res) => {
+app.get('/image-count', saveImageLimiter, (req, res) => {
     let totalCount = 0;
     const countByDigit = {};
 
