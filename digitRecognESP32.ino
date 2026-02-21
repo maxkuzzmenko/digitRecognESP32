@@ -21,7 +21,7 @@ Eloquent::TF::Sequential<10, ARENA_SIZE> tf;
 // Web server on port 80
 WebServer server(80);
 
-// Minified HTML (camera removed, optimized for flash storage)
+// Website HTML
 const char* htmlPage = R"rawliteral(
 <!DOCTYPE html>
 <html lang="en">
@@ -347,7 +347,7 @@ const char* htmlPage = R"rawliteral(
 )rawliteral";
 
 void handleRoot() {
-    server.send(200, "text/html", htmlPage);
+    server.send(200, "text/html", htmlPage); // Serve the html 
 }
 
 void handlePredict() {
@@ -401,32 +401,37 @@ void handlePredict() {
 }
 
 void setup() {
-    Serial.begin(115200);
+    Serial.begin(115200); 
     delay(1000);
     Serial.println("\n\n=== ESP32 Digit Recognition Web Server ===");
 
     // Initialize TensorFlow model
     Serial.println("Initializing TensorFlow Lite model...");
-    tf.setNumInputs(784);
-    tf.setNumOutputs(10);
-    tf.resolver.AddConv2D();
+    tf.setNumInputs(784); // Number of input neurons; 28x28 pixels
+    tf.setNumOutputs(10); // 0-9 digit output 
+    // Add the hidden layers
+    tf.resolver.AddConv2D(); 
     tf.resolver.AddMaxPool2D();
     tf.resolver.AddReshape();
     tf.resolver.AddFullyConnected();
     tf.resolver.AddSoftmax();
 
+    // Handling errors
     while (!tf.begin(digits_model).isOk()) {
         Serial.println("ERROR: " + String(tf.exception.toString()));
         delay(1000);
     }
+    // Print this into the line in case of having it loaded successfully
     Serial.println("✓ Model loaded successfully!");
 
     // Set up WiFi Access Point
     Serial.println("\nStarting WiFi Access Point...");
-    WiFi.mode(WIFI_AP);
-    WiFi.softAP(ap_ssid, ap_password);
+    WiFi.mode(WIFI_AP); // WiFi Access Point mode
+    WiFi.softAP(ap_ssid, ap_password); // Credentials
 
-    IPAddress IP = WiFi.softAPIP();
+    IPAddress IP = WiFi.softAPIP(); // Get the IP Address, the 192.168.4.1
+    
+    // Connection info and other stuff
     Serial.println("✓ Access Point started!");
     Serial.println("\n========== CONNECTION INFO ==========");
     Serial.println("WiFi Network: " + String(ap_ssid));
@@ -439,10 +444,11 @@ void setup() {
     Serial.println("3. Upload or capture a digit image!");
     Serial.println("\n=====================================\n");
 
-    // Set up web server routes
+    // Basically, what action to do with each route
     server.on("/", handleRoot);
     server.on("/predict", handlePredict);
 
+    // Start the web server 
     server.begin();
     Serial.println("✓ Web server started!\n");
 }
