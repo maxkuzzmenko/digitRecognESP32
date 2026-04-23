@@ -16,7 +16,7 @@ const saveImageLimiter = rateLimit({
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Ensure dataset directories exist
 for (let i = 0; i < 10; i++) {
